@@ -6,6 +6,6 @@ const Leave = sequelize.define("Leave", {
   fromDate: { type: DataTypes.DATEONLY, allowNull: false },
   toDate: { type: DataTypes.DATEONLY, allowNull: false },
   reason: { type: DataTypes.STRING(255) },
-});
+}, { tableName: "leaves" });
 
 module.exports = Leave;

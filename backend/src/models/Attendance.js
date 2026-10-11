@@ -11,6 +11,7 @@ const Attendance = sequelize.define(
     },
   },
   {
+    tableName: "attendances",
     // one record per worker per day
     indexes: [{ unique: true, fields: ["WorkerId", "date"] }],
   }

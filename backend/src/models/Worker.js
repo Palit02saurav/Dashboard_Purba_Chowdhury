@@ -8,7 +8,7 @@ const Worker = sequelize.define("Worker", {
   dailyWage: { type: DataTypes.DECIMAL(10, 2), defaultValue: 0 },
   joiningDate: { type: DataTypes.DATEONLY },
   isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
-});
+}, { tableName: "workers" });
 
 
 
