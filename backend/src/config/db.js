@@ -1,4 +1,9 @@
+
 const { Sequelize } = require("sequelize");
+const fs = require("fs");
+const path = require("path");
+
+const caPath = path.join(__dirname, "../../certs/ca.pem");
 
 const sequelize = new Sequelize(
   process.env.DB_NAME,
@@ -6,9 +11,15 @@ const sequelize = new Sequelize(
   process.env.DB_PASSWORD,
   {
     host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
+    port: Number(process.env.DB_PORT),
     dialect: "mysql",
     logging: false,
+    dialectOptions: {
+      ssl: {
+        ca: fs.readFileSync(caPath, "utf8"),
+        rejectUnauthorized: true,
+      },
+    },
   }
 );
 
