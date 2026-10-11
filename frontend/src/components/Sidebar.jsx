@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, CalendarPlus, CalendarDays, CalendarOff } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { LayoutDashboard, Users, CalendarPlus, CalendarDays, CalendarOff, LogOut } from "lucide-react";
+import { signOut } from "@/lib/auth";
 const links = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/workers", label: "Workers", icon: Users },
@@ -11,8 +12,13 @@ const links = [
 ];
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const logout = () => {
+    signOut();
+    router.replace("/login");
+  };
   return (
-    <aside className="w-64 border-r bg-white p-4 space-y-2">
+    <aside className="flex w-64 flex-col gap-2 border-r bg-white p-4">
       {links.map((l) => {
         const active = pathname === l.href;
         const Icon = l.icon;
@@ -31,6 +37,14 @@ export default function Sidebar() {
           </Link>
         );
       })}
+
+      <button
+        onClick={logout}
+        className="mt-auto flex w-full items-center gap-3 rounded-xl px-4 py-3 font-semibold text-red-600 transition hover:bg-red-50"
+      >
+        <LogOut size={20} />
+        Logout
+      </button>
     </aside>
   );
 }

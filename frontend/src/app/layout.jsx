@@ -8,8 +8,8 @@ const poppins = Poppins({
 });
 
 export const metadata = {
-  title: "Purba Dashboard",
-  description: "Worker attendance dashboard",
+  title: "Business Dashboard",
+  description: "Super Admin Panel",
 };
 
 export default function RootLayout({ children }) {

@@ -1,11 +1,26 @@
+import { getToken, handleUnauthorized } from "./auth";
+
 const API = process.env.NEXT_API_URL;
 
-async function request(path, options) {
+const authHeaders = () => {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+async function request(path, options = {}) {
   const res = await fetch(`${API}${path}`, {
-    headers: { "Content-Type": "application/json" },
     cache: "no-store",
     ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+      ...(options.headers || {}),
+    },
   });
+  if (res.status === 401) {
+    handleUnauthorized();
+    throw new Error("Session expired. Please sign in again.");
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || "Request failed");
@@ -20,13 +35,17 @@ export const api = {
   importWorkers: async (file) => {
     const fd = new FormData();
     fd.append("file", file);
-    const res = await fetch(`${API}/workers/import`, { method: "POST", body: fd });
+    const res = await fetch(`${API}/workers/import`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: fd,
+    });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.message || "Import failed");
     return data;
   },
   downloadTemplate: async () => {
-    const res = await fetch(`${API}/workers/template`);
+    const res = await fetch(`${API}/workers/template`, { headers: authHeaders() });
     if (!res.ok) throw new Error("Could not download the template");
     return res.blob();
   },
