@@ -4,6 +4,10 @@ const { Worker } = require("../models");
 
 const MAX_IMPORT_ROWS = 500;
 
+
+const checkPhoto = (photo) =>
+  !photo || (/^data:image\/(jpeg|png);base64,/.test(photo) && photo.length < 600000);
+
 // reads the real value out of an Excel cell (handles rich text / formulas)
 const cellValue = (v) => {
   if (v === null || v === undefined) return "";
@@ -46,11 +50,14 @@ const parseDate = (v) => {
 
 exports.createWorker = async (req, res, next) => {
   try {
-    const { name, phone, role, dailyWage, joiningDate } = req.body;
+    const { name, phone, role, dailyWage, joiningDate, photo, notes } = req.body;
     if (!name) return res.status(400).json({ message: "Name is required" });
 
     if (phone && !/^\d{10}$/.test(phone)) {
       return res.status(400).json({ message: "Phone must be exactly 10 digits" });
+    }
+    if (!checkPhoto(photo)) {
+      return res.status(400).json({ message: "Invalid or too large photo" });
     }
 
     const worker = await Worker.create({
@@ -59,6 +66,8 @@ exports.createWorker = async (req, res, next) => {
       role,
       dailyWage,
       joiningDate: joiningDate || null,
+      photo: photo || null,
+      notes: notes?.trim() || null,
     });
     res.status(201).json(worker);
   } catch (err) {
@@ -68,7 +77,10 @@ exports.createWorker = async (req, res, next) => {
 
 exports.updateWorker = async (req, res, next) => {
   try {
-    const { name, phone, role, dailyWage, joiningDate } = req.body;
+    const { name, phone, role, dailyWage, joiningDate, photo, notes } = req.body;
+    if (!checkPhoto(photo)) {
+      return res.status(400).json({ message: "Invalid or too large photo" });
+    }
     if (!name) return res.status(400).json({ message: "Name is required" });
 
     if (phone && !/^\d{10}$/.test(phone)) {
@@ -86,6 +98,8 @@ exports.updateWorker = async (req, res, next) => {
       role,
       dailyWage,
       joiningDate: joiningDate || null,
+      photo: photo || null,
+      notes: notes?.trim() || null,
     });
     res.json(worker);
   } catch (err) {

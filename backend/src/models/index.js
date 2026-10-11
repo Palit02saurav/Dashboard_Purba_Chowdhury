@@ -4,6 +4,7 @@ const Attendance = require("./Attendance");
 const Meeting = require("./Meeting");
 const Leave = require("./Leave");
 
+
 Worker.hasMany(Attendance, { foreignKey: "WorkerId" });
 Attendance.belongsTo(Worker, { foreignKey: "WorkerId" });
 

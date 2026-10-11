@@ -1,5 +1,6 @@
 const { Op } = require("sequelize");
 const { Worker, Attendance, Meeting, Leave } = require("../models");
+const { dayStatus } = require("../utils/attendance");
 
 const pad = (n) => String(n).padStart(2, "0");
 
@@ -88,6 +89,8 @@ exports.getMonth = async (req, res, next) => {
         });
       }
     });
+        const todayStr = new Date().toLocaleDateString("en-CA");
+    const savedMap = new Map(records.map((r) => [`${r.WorkerId}|${r.date}`, r.status]));
 
     // salary due on the last day of the month
     const salaryList = [];
@@ -96,9 +99,20 @@ exports.getMonth = async (req, res, next) => {
       if (!wage) return;
       if (w.joiningDate && w.joiningDate > end) return;
 
-      const mine = records.filter((r) => r.WorkerId === w.id);
-      const presentDays = mine.filter((r) => r.status === "present").length;
-      const halfDays = mine.filter((r) => r.status === "half-day").length;
+      let presentDays = 0;
+      let halfDays = 0;
+      for (let d = 1; d <= lastDay; d++) {
+        const date = `${year}-${pad(month)}-${pad(d)}`;
+        const status = dayStatus({
+          date,
+          joiningDate: w.joiningDate,
+          upTo: todayStr,
+          onLeave: planned.has(`${w.id}|${date}`),
+          saved: savedMap.get(`${w.id}|${date}`),
+        });
+        if (status === "present") presentDays++;
+        if (status === "half-day") halfDays++;
+      }
       const amount = (presentDays + halfDays * 0.5) * wage;
       if (amount <= 0) return;
 

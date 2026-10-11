@@ -1,6 +1,6 @@
 const { Op } = require("sequelize");
 const { Worker, Attendance, Leave } = require("../models");
-
+const { dayStatus } = require("../utils/attendance");
 // local date as YYYY-MM-DD (avoids the UTC off-by-one-day problem)
 const today = () => new Date().toLocaleDateString("en-CA");
 
@@ -64,12 +64,15 @@ exports.getByDate = async (req, res, next) => {
         const onLeave = weekLeaves.some(
           (l) => l.WorkerId === w.id && l.fromDate <= day && l.toDate >= day
         );
-        if (onLeave) {
-          leaveDays++;
-          return { date: day, status: "leave" };
-        }
         const rec = weekRecords.find((r) => r.WorkerId === w.id && r.date === day);
-        const status = rec ? rec.status : null;
+        const status = dayStatus({
+          date: day,
+          joiningDate: w.joiningDate,
+          upTo: date,
+          onLeave,
+          saved: rec ? rec.status : null,
+        });
+        if (status === "leave") leaveDays++;
         if (status === "present") { presentDays++; units += 1; }
         if (status === "half-day") { halfDays++; units += 0.5; }
         return { date: day, status };
@@ -77,7 +80,13 @@ exports.getByDate = async (req, res, next) => {
 
       return {
         ...w,
-        status: map.get(w.id) || null,
+        status: dayStatus({
+          date,
+          joiningDate: w.joiningDate,
+          upTo: date,
+          onLeave: leaveOf.has(w.id),
+          saved: map.get(w.id) || null,
+        }),
         onLeave: leaveOf.has(w.id),
         leaveReason: leaveOf.get(w.id) || null,
         week: weekStatus,

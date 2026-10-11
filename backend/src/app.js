@@ -3,6 +3,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const errorHandler = require("./middleware/error");
+const requireAuth = require("./middleware/auth");
 
 const app = express();
 
@@ -21,14 +22,16 @@ app.use(
       return cb(new Error("Not allowed by CORS"));
     },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type"],
+    allowedHeaders: ["Content-Type", "Authorization"],  
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 app.use(morgan("dev"));
 
 app.get("/", (_, res) => res.json({ ok: true, service: "Purba Dashboard API" }));
 app.get("/api/health", (_, res) => res.json({ ok: true }));
+app.use("/api/auth", require("./routes/auth.routes")); // public
+app.use("/api", requireAuth); // everything below needs a valid login
 app.use("/api/workers", require("./routes/worker.routes"));
 app.use("/api/attendance", require("./routes/attendance.routes"));
 app.use("/api/meetings", require("./routes/meeting.routes"));
