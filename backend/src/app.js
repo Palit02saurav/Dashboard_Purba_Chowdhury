@@ -6,8 +6,24 @@ const errorHandler = require("./middleware/error");
 
 const app = express();
 
-app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_URL }));
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+
+const allowedOrigins = (process.env.CLIENT_URL || "")
+  .split(",")
+  .map((s) => s.trim().replace(/\/$/, ""))
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+      console.error("CORS blocked origin:", origin);
+      return cb(new Error("Not allowed by CORS"));
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
 app.use(express.json());
 app.use(morgan("dev"));
 
