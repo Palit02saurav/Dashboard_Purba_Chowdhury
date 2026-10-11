@@ -27,6 +27,7 @@ app.use(
 app.use(express.json());
 app.use(morgan("dev"));
 
+app.get("/", (_, res) => res.json({ ok: true, service: "Purba Dashboard API" }));
 app.get("/api/health", (_, res) => res.json({ ok: true }));
 app.use("/api/workers", require("./routes/worker.routes"));
 app.use("/api/attendance", require("./routes/attendance.routes"));
