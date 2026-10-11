@@ -39,7 +39,13 @@ export default function MeetingsPage() {
   const [success, setSuccess] = useState("");
   const [filter, setFilter] = useState("upcoming"); // upcoming | past
 
-  const load = async () => setMeetings(await api.getMeetings());
+const load = async () => {
+  try {
+    setMeetings(await api.getMeetings());
+  } catch (err) {
+    setError(err.message);
+  }
+};
   useEffect(() => { load(); }, []);
 
   const handle = (e) => setForm({ ...form, [e.target.name]: e.target.value });
