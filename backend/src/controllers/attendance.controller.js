@@ -21,6 +21,15 @@ const weekDays = (dateStr) => {
   return days;
 };
 
+// every date (YYYY-MM-DD) of the month containing dateStr
+const monthDays = (dateStr) => {
+  const [y, m] = dateStr.split("-").map(Number);
+  const last = new Date(y, m, 0).getDate();
+  const days = [];
+  for (let i = 1; i <= last; i++) days.push(`${y}-${pad(m)}-${pad(i)}`);
+  return days;
+};
+
 exports.getByDate = async (req, res, next) => {
   try {
     const date = req.query.date || today();
@@ -53,6 +62,20 @@ exports.getByDate = async (req, res, next) => {
       raw: true,
     });
 
+    // ---- monthly summary ----
+    const month = monthDays(date);
+    const monthStart = month[0];
+    const monthEnd = month[month.length - 1];
+
+    const monthRecords = await Attendance.findAll({
+      where: { date: { [Op.between]: [monthStart, monthEnd] } },
+      raw: true,
+    });
+    const monthLeaves = await Leave.findAll({
+      where: { fromDate: { [Op.lte]: monthEnd }, toDate: { [Op.gte]: monthStart } },
+      raw: true,
+    });
+
     const result = workers.map((w) => {
       const wage = Number(w.dailyWage) || 0;
       let units = 0;
@@ -78,6 +101,26 @@ exports.getByDate = async (req, res, next) => {
         return { date: day, status };
       });
 
+      // month so far (up to selected date) and projected full month
+      let monthUnits = 0;
+      let monthProjectedUnits = 0;
+      let monthPresentDays = 0;
+      month.forEach((day) => {
+        const onLeave = monthLeaves.some(
+          (l) => l.WorkerId === w.id && l.fromDate <= day && l.toDate >= day
+        );
+        const rec = monthRecords.find((r) => r.WorkerId === w.id && r.date === day);
+        const saved = rec ? rec.status : null;
+
+        const earned = dayStatus({ date: day, joiningDate: w.joiningDate, upTo: date, onLeave, saved });
+        if (earned === "present") { monthUnits += 1; monthPresentDays += 1; }
+        if (earned === "half-day") { monthUnits += 0.5; monthPresentDays += 0.5; }
+
+        const full = dayStatus({ date: day, joiningDate: w.joiningDate, upTo: monthEnd, onLeave, saved });
+        if (full === "present") monthProjectedUnits += 1;
+        if (full === "half-day") monthProjectedUnits += 0.5;
+      });
+
       return {
         ...w,
         status: dayStatus({
@@ -94,6 +137,9 @@ exports.getByDate = async (req, res, next) => {
         halfDays,
         leaveDays,
         weeklyWage: units * wage,
+        monthPresentDays,
+        monthWage: monthUnits * wage,
+        monthProjectedWage: monthProjectedUnits * wage,
       };
     });
 
