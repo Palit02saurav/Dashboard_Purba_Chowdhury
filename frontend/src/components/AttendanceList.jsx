@@ -177,8 +177,11 @@ export default function AttendanceList() {
                   (₹{Number(w.dailyWage) || 0}/day)
                 </p>
                 <p className="text-sm text-gray-500">
-                  {monthLabel} wage:{" "}
+                  {monthLabel} earned:{" "}
                   <span className="font-bold text-brand">₹{w.monthWage || 0}</span>
+                </p>
+                <p className="text-xs text-gray-400">
+                  Full month projected: ₹{w.monthProjectedWage || 0}
                 </p>
               </div>
               <button
