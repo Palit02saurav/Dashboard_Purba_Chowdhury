@@ -100,6 +100,10 @@ export default function AttendanceList() {
 
   const presentCount = (w) => (w.presentDays || 0) + (w.halfDays || 0) * 0.5;
 
+  const monthLabel = date
+    ? new Date(`${date}T00:00:00`).toLocaleString("en-IN", { month: "long", year: "numeric" })
+    : "";
+
   return (
     <div>
       {/* Header card */}
@@ -171,6 +175,13 @@ export default function AttendanceList() {
                   Weekly wage:{" "}
                   <span className="font-bold text-gray-900">₹{w.weeklyWage || 0}</span>{" "}
                   (₹{Number(w.dailyWage) || 0}/day)
+                </p>
+                <p className="text-sm text-gray-500">
+                  {monthLabel} earned:{" "}
+                  <span className="font-bold text-brand">₹{w.monthWage || 0}</span>
+                </p>
+                <p className="text-xs text-gray-400">
+                  Full month projected: ₹{w.monthProjectedWage || 0}
                 </p>
               </div>
               <button
@@ -255,6 +266,11 @@ export default function AttendanceList() {
               {selected.leaveDays > 0 && ` • ${selected.leaveDays} on leave`} • Weekly wage:{" "}
               <span className="font-bold text-gray-900">₹{selected.weeklyWage || 0}</span>{" "}
               (₹{Number(selected.dailyWage) || 0}/day)
+            </p>
+            <p className="mt-2 text-sm text-gray-600">
+              {monthLabel}: present {selected.monthPresentDays || 0} days • earned{" "}
+              <span className="font-bold text-brand">₹{selected.monthWage || 0}</span>{" "}
+              (projected ₹{selected.monthProjectedWage || 0})
             </p>
           </div>
         </div>
